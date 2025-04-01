@@ -1,0 +1,76 @@
+version: '3'
+services:
+
+  client-app:
+    build:
+      context: ./client-app
+    networks:
+      - kongmesh
+    environment:
+      - INSTANA_DEV=1
+      - target_url=http://kong-gateway:8080/kong-demo
+
+  kong:
+    build:
+      context: ./kong
+    networks:
+      kongmesh:
+        aliases:
+          - kong-gateway
+    volumes:
+      - ./kong/kong.conf:/etc/kong/kong.conf
+      - ./kong/kong.yml:/etc/kong/kong.yml
+    environment:
+        KONG_LOG_LEVEL: debug
+        KONG_ADMIN_ACCESS_LOG: /dev/stdout
+        KONG_ADMIN_ERROR_LOG: /dev/stderr
+        KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+        KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+        KONG_PROXY_ACCESS_LOG: /dev/stdout
+        KONG_PROXY_ERROR_LOG: /dev/stderr
+    expose:
+      - "8080"
+      - "8001"
+
+  server-app:
+    build:
+      context: ./server-app
+    networks:
+      kongmesh:
+        aliases:
+          - server-app
+    environment:  
+      - INSTANA_DEV=1
+      - SERVER_PORT=8080
+    expose:
+      - "8080"
+
+  agent:
+    image: icr.io/instana/agent
+    pid: "host"
+    privileged: true
+    volumes:
+      - /var/run:/var/run
+      - /run:/run
+      - /dev:/dev:ro
+      - /sys:/sys:ro
+      - /var/log:/var/log:ro
+      - ./agent/configuration.yaml:/opt/instana/agent/etc/instana/configuration.yaml:ro
+      - ./agent/com.instana.agent.main.sender.File.cfg:/opt/instana/agent/etc/instana/com.instana.agent.main.sender.File.cfg
+      - ./agent/log/:/opt/instana/agent/data/log/
+    networks:
+      kongmesh:
+        aliases:
+          - instana-agent
+    environment:
+      - INSTANA_AGENT_ENDPOINT=${agent_endpoint:-ingress-red-saas.instana.io}
+      - INSTANA_AGENT_ENDPOINT_PORT=${agent_endpoint_port:-443}
+      - INSTANA_DOWNLOAD_KEY=${download_key}
+      - INSTANA_AGENT_KEY=${agent_key}
+      - INSTANA_AGENT_ZONE=${agent_zone:-kong-tracing-demo}
+      - INSTANA_LOG_LEVEL=${agent_log_level:-INFO}
+    expose:
+      - "42699"
+
+networks:
+  kongmesh: {}
