@@ -84,6 +84,7 @@ plugins:
       host.id: "$(headers.host)"
     propagation:
       extract: [ instana ]
+      inject: [ instana ]
       default_format: "w3c"
 # - name: rate-limiting
 #   consumer: example-user
