@@ -37,9 +37,9 @@ This will build and launch
 
 After the agent is bootstrapped and starts accepting spans from Kong, the resulting traces in the Analyze view will look like the following:
 
-![Service dashboard](images/service-dashboard.png)
+![Service dashboard](images/service-dashboard-kong3100.png)
 
-![Demo traces in the Analyze view](images/trace-view.png)
+![Demo traces in the Analyze view](images/trace-view-kong3100.png)
 
 Naturally, all the other [Kong capabilities of Instana](https://www.ibm.com/docs/en/instana-observability/current?topic=technologies-monitoring-kong-api-gateway-beta)
 will work out of the box as well ;-)
@@ -109,11 +109,27 @@ Server view:
 
 ![Incorrect flow graph server view](images/kong-flow-graph-incorrect-server-view.png)
 
+#### Analysis and Solution
+
+Kong does not support instana header propagation until 3.10.0.0. The instana header is left unchanged when passing kong gateway. Instana backend might get confused under this circumstance.
+
+Please use >= Kong 3.10.0.0 and follow [kong configuration file](kong/kong.yml) to avoid flow graph misinterpretion. 
+
+---
+
 ### Call order in "Analytics -> Calls" incorrect
 
 Kong is expected to appear in the middle. But it appears as the last span instead:
 
 ![Incorrect call order](images/kong-calls-graph-incorrect.png)
+
+#### Analysis and Solution
+
+This is caused by similar reason as [above](#flow-graph-incorrect)
+
+Please use >= Kong 3.10.0.0 and follow [kong configuration file](kong/kong.yml) to avoid call order incorrect issue. 
+
+---
 
 ### Unmonitored entity in Application -> Infrastructure
 
