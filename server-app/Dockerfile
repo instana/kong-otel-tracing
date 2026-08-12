@@ -1,4 +1,4 @@
-FROM openjdk:11-jdk-slim AS kong-tracing-server-app-build
+FROM azul/zulu-openjdk:11 AS kong-tracing-server-app-build
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y && apt-get install -y --no-install-recommends --no-install-suggests \
@@ -9,7 +9,7 @@ WORKDIR /opt/server-app/
 COPY . .
 RUN ./mvnw clean package
 
-FROM openjdk:11-jre-slim
+FROM azul/zulu-openjdk:11
 
 VOLUME /tmp
 WORKDIR /opt/server-app/
