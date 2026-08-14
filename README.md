@@ -96,6 +96,10 @@ com.instana.plugin.kong:
       availabilityZone: 'KongAZ'   # default is 'KongAZ' - a separate Kong host appears on infrastructure map
 ```
 
+## Run this in minikube
+
+See: [minikube/README.md](./minikube/README.md)
+
 ## Known issues
 
 ### Flow graph incorrect
