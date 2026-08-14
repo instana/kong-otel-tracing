@@ -8,7 +8,7 @@ services:
       - kongmesh
     environment:
       - INSTANA_DEV=1
-      - target_url=http://kong-gateway:8080/kong-demo
+      - target_url=https://kong-gateway:8443/kong-demo
 
   kong:
     build:
@@ -28,6 +28,8 @@ services:
         KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
         KONG_PROXY_ACCESS_LOG: /dev/stdout
         KONG_PROXY_ERROR_LOG: /dev/stderr
+        KONG_TLS_CERTIFICATE_VERIFY: "off"
+        KONG_PROXY_SERVER_SSL_VERIFY: "off"
     expose:
       - "8080"
       - "8001"
