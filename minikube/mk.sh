@@ -313,6 +313,10 @@ bring_up() {
   generate_yaml
   build_and_push_images
   run_demo_pods
+  set +x
+  echo "Run 'kubectl get all -A' to check the Kubernetes resources."
+  echo "Run 'kubectl logs -n kong-demo deployment.apps/kong | grep "traces.*exporter" | tail -n30' to check the Kong OTel exporter."
+  set -x
 }
 
 # Print usage text and exit.
