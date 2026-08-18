@@ -6,6 +6,7 @@ Also Kong monitoring is shown.
 ## Prerequisites
 
 A `docker-compose` installation running on your machine. This demo has been created and tested on Linux with `docker-compose`.
+Also the shell command `envsubst` (package `gettext`) needs to be installed.
 
 ## Configure
 
@@ -25,7 +26,7 @@ A template [.env.template](.env.template) can be copied to `.env` for your conve
 ## Build & Launch
 
 ```bash
-docker-compose down && docker-compose up --build
+./run_demo.sh
 ```
 
 This will build and launch

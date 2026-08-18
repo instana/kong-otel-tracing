@@ -1,7 +1,8 @@
 ## Run Kong OTel tracing demo in Minikube
 
-This demo part is based on minikube, QEMU/KVM, kubectl, helm 3, Docker CE,
-RHEL 8, `firewall-config`, and the Docker registry image `registry:2`.
+This demo part is based on minikube, QEMU/KVM, `kubectl`, helm 3, Docker CE,
+RHEL 8, `firewall-config`, shell command `envstubst` (`gettext` package),
+and the Docker registry image `registry:2`.
 
 RHEL 8 is only used as an example OS here. Most parts work pretty much the
 same on other Linux distributions as well.
@@ -29,6 +30,20 @@ Then it pushes those images to a local insecure Docker registry called
 The script starts `minikube` and deploys the client-app, the server-app,
 the Instana agent, and Kong.
 The `helm` command in version 3 is required to deploy the Instana agent.
+
+### Kong `traces_endpoint`
+
+In `../kong/kong.yml` OpenTelemetry plugin configuration it is impossible
+to set the `traces_endpoint` hostname from an environment variable.
+
+Also the hostname `instana-agent` is not reachable there, because this demo
+is running in a different namespace `kong-demo`. To reach a different
+namespace, "hostname.namespace" has to be used in Kubernetes.
+
+So the `mk.sh` script uses `envsubst` to replace shell variable
+`INSTANA_AGENT_HOST` in `../kong/kong.yml.in` with
+`instana-agent.instana-agent`. The resulting config file is `../kong/kong.yml`.
+That one is deployed by calling `docker-compose build` right after.
 
 ### Install minikube on RHEL 8
 

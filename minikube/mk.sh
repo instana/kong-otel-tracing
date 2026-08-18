@@ -204,7 +204,17 @@ tag_and_push_img() {
   docker push ${remote_img}
 }
 
+KONG_CFG_YAML_IN="../kong/kong.yml.in"
+KONG_CFG_YAML_OUT=${KONG_CFG_YAML_IN%".in"}    # Drop .in suffix
+
+patch_kong_config() {
+  # Set the Instana agent hostname as "hostname.namespace" (both are "instana-agent")
+  export INSTANA_AGENT_HOST="instana-agent.instana-agent"
+  envsubst '{$INSTANA_AGENT_HOST}' < "${KONG_CFG_YAML_IN}" > "${KONG_CFG_YAML_OUT}"
+}
+
 build_and_push_images() {
+  patch_kong_config
   pushd ..
   docker-compose build
   popd
