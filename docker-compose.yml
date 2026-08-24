@@ -8,7 +8,7 @@ services:
       - kongmesh
     environment:
       - INSTANA_DEV=1
-      - target_url=http://kong-gateway:8080/kong-demo
+      - target_url=https://kong-gateway:8443/kong-demo
 
   kong:
     build:
@@ -28,6 +28,8 @@ services:
         KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
         KONG_PROXY_ACCESS_LOG: /dev/stdout
         KONG_PROXY_ERROR_LOG: /dev/stderr
+        KONG_TLS_CERTIFICATE_VERIFY: "off"
+        KONG_PROXY_SERVER_SSL_VERIFY: "off"
     expose:
       - "8080"
       - "8001"
@@ -57,7 +59,7 @@ services:
       - /var/log:/var/log:ro
       - ./agent/configuration.yaml:/opt/instana/agent/etc/instana/configuration.yaml:ro
       - ./agent/com.instana.agent.main.sender.File.cfg:/opt/instana/agent/etc/instana/com.instana.agent.main.sender.File.cfg
-      - ./agent/log/:/opt/instana/agent/data/log/
+      - ./agent/logs/:/opt/instana/agent/data/log/
     networks:
       kongmesh:
         aliases:

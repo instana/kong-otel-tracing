@@ -78,7 +78,7 @@ services:
 plugins:
 - name: opentelemetry
   config:
-    endpoint: "http://instana-agent:4318/v1/traces"
+    traces_endpoint: "http://instana-agent:4318/v1/traces"
     resource_attributes:
       service.name: "kong-otel-demo"
       host.id: "$(headers.host)"

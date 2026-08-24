@@ -25,8 +25,7 @@ A template [.env.template](.env.template) can be copied to `.env` for your conve
 ## Build & Launch
 
 ```bash
-docker-compose build
-docker-compose up
+docker-compose down && docker-compose up --build
 ```
 
 This will build and launch
@@ -41,7 +40,7 @@ After the agent is bootstrapped and starts accepting spans from Kong, the result
 
 ![Demo traces in the Analyze view](images/trace-view-kong3100.png)
 
-Naturally, all the other [Kong capabilities of Instana](https://www.ibm.com/docs/en/instana-observability/current?topic=technologies-monitoring-kong-api-gateway-beta)
+Naturally, all the other [Kong capabilities of Instana](https://www.ibm.com/docs/en/instana-observability/saas?topic=technologies-monitoring-kong-api-gateway)
 will work out of the box as well ;-)
 
 ## Set up an Application Perspective for the Demo
@@ -64,9 +63,14 @@ tracing_sampling_rate = 1.0
 plugins:
 - name: opentelemetry
   config:
-    endpoint: "https://instana-agent:4318/v1/traces"
+    traces_endpoint: "https://instana-agent:4318/v1/traces"
     resource_attributes:
       service.name: "kong-otel"
+      host.id: "$(headers.host)"
+    propagation:
+      extract: [ instana ]
+      inject: [ instana ]
+      default_format: "w3c"
 ```
 * Enable and configure the Instana agent OpenTelemetry plugin (`configuration.yaml`):
 ```
@@ -84,11 +88,12 @@ com.instana.plugin.opentelemetry:
 * Enable and configure the Instana agent Kong plugin (`configuration.yaml`):
 ```
 com.instana.plugin.kong:
+  enabled: true             # Enable the sensor
   remote:                   # Multiple configurations can be specified
     - host: 'kong-gateway'  # Kong server host or IP address.
       port: '8001'          # Admin API port (default is 8444). In case of basic authentication, it is a proxy port.
       protocol: 'http'      # ['https' or 'http']. Default is 'https'. Protocol to access Kong Admin API.
-      availabilityZone: 'kong_az'   # default is 'kong_az' - a separate Kong host appears on infrastructure map
+      availabilityZone: 'KongAZ'   # default is 'KongAZ' - a separate Kong host appears on infrastructure map
 ```
 
 ## Known issues
@@ -147,7 +152,7 @@ Example:
 agent_log_level=DEBUG
 ```
 
-Generated Instana agent logs can be found in `agent/log/`.
+Generated Instana agent logs can be found in `agent/logs/`.
 
 Enable the debug logging of traces in the Instana agent by uncommenting the following
 in the file `agent/com.instana.agent.main.sender.File.cfg`:
@@ -156,4 +161,4 @@ prefix=local
 type=traces
 ```
 By default, the trace debug logging is enabled.
-The traces are generated as `agent/log/local-<timestamp>.log`.
+The traces are generated as `agent/logs/local-<timestamp>.log`.

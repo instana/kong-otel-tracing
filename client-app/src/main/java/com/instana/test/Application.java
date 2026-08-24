@@ -2,6 +2,12 @@ package com.instana.test;
 
 import com.instana.sdk.annotation.Span;
 import com.instana.sdk.support.SpanSupport;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.TrustStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -11,12 +17,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 
 @SpringBootApplication
 @SuppressWarnings("unused")
@@ -60,10 +69,34 @@ public class Application {
 
 		@Bean
 		RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
-			return restTemplateBuilder
-				.setConnectTimeout(200)
-				.setReadTimeout(1_000)
-				.build();
+			try {
+				// Trust all certificates (for development/demo only)
+				TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+				
+				SSLContext sslContext = SSLContexts.custom()
+					.loadTrustMaterial(null, acceptingTrustStrategy)
+					.build();
+				
+				// Create SSL socket factory with SNI support and no hostname verification
+				SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(
+					sslContext,
+					NoopHostnameVerifier.INSTANCE
+				);
+				
+				CloseableHttpClient httpClient = HttpClients.custom()
+					.setSSLSocketFactory(csf)
+					.build();
+				
+				HttpComponentsClientHttpRequestFactory requestFactory =
+					new HttpComponentsClientHttpRequestFactory();
+				requestFactory.setHttpClient(httpClient);
+				requestFactory.setConnectTimeout(200);
+				requestFactory.setReadTimeout(1_000);
+				
+				return new RestTemplate(requestFactory);
+			} catch (Exception e) {
+				throw new RuntimeException("Failed to create RestTemplate with SSL configuration", e);
+			}
 		}
 
 	}

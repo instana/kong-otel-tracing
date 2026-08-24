@@ -1,1 +1,4 @@
+.bob
 .env
+agent/logs/*
+*.patch

@@ -161,10 +161,11 @@ com.instana.plugin.opentelemetry:
 
 # Kong API Gateway
 com.instana.plugin.kong:
+  enabled: true # To enable the sensor, set its value to ‘true’.
   remote: # Multiple configurations can be specified
     - host: 'kong-gateway' # Kong Server Host or IP address.
       port: '8001' # Admin api port(default is 8444).In case of basic authentication,it is a proxy port.
-      availabilityZone: 'kong_az' # default is 'kong_az'
+      availabilityZone: 'KongAZ' # default is 'KongAZ'
 #      poll_rate: 30 # Poll rate in seconds. It can not be less than 30 seconds.
       protocol: 'http' # ['https' or 'http']. Default is 'https'. Protocol to access Kong Admin API.
 #      username: ''  # Optional.Only for basic authentication otherwise keep it commented.
