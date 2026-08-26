@@ -145,6 +145,22 @@ install_instana_agent() {
     --set agent.endpointPort=${agent_endpoint_port} \
     --set cluster.name=${cluster_name} \
     --set zone.name="${agent_zone}" \
+    --set agent.configuration_yaml="
+com.instana.plugin.opentelemetry:
+  enabled: true
+  grpc:
+    enabled: true
+  http:
+    enabled: true
+
+com.instana.plugin.kong:
+  enabled: true
+  remote:
+    - host: 'kong.kong-demo'
+      port: '8001'
+      availabilityZone: 'KongAZ'
+      protocol: 'http'
+    " \
     instana-agent
 }
 
