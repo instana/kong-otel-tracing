@@ -35,6 +35,10 @@ NAMESPACE="kong-demo"
 SRC_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 cd "${SRC_DIR}"
 
+# grep -q return for "pattern has been found"
+FOUND=0
+NOT_FOUND=1
+
 force_success() {
   echo -n ""
 }
@@ -78,7 +82,9 @@ uninstall_instana_agent() {
   del_namespace instana-agent
 }
 
-# Check if pods are already running inside a given namespace
+# Check if pods are already running inside a given namespace.
+# Detect a broken instana-agent-controller-manager because
+# it needs to create further pods such as the actual agent pod first.
 # Returns
 # RC=0 : Nothing running
 # RC=1 : Pods are running
@@ -91,11 +97,20 @@ namespace_running() {
   local num_pods=$(($(wc -l <<< ${pods_output} | tr -d '\n') - 1))
   set +e
   grep -q "Running" <<< ${pods_output}
-  local not_running=$?
+  local found_running=$?
   local is_running=0
-  # Negate "not running" to "is running"
-  if [ ${not_running} -eq 0 ]; then
+  # Convert "found running" to "is running"
+  if [ ${found_running} -eq ${FOUND} ]; then
     is_running=1
+  fi
+  # Broken instana-agent-controller-manager not spawning pods?
+  grep -q "controller-manager" <<< ${pods_output}
+  local found_controller_manager=$?
+  if [[ ${found_controller_manager} -eq ${FOUND} && \
+       -n "${num_pods}" && ${num_pods} -eq 1 ]]; then
+    echo "Namespace $ns has broken controller manager."
+    RC=2
+    return
   fi
   set -e
   # Pods found?
