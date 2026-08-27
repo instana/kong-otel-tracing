@@ -13,10 +13,12 @@ Also the shell command `envsubst` (package `gettext`) needs to be installed.
 Create a `.env` file in the root of the checked-out version of this repository and enter the following text, with the values adjusted as necessary:
 
 ```text
-agent_key=<TODO FILL IN>
-agent_endpoint=<local ip or remote host; e.g., ingress-red-saas.instana.io>
-agent_endpoint_port=<443 already set as default; or 4443 for local>
+agent_key=<agent secret key>
+download_key=<download secret key (optional agent key with download privileges)>
 agent_zone=<name of the zone for the agent; default: kong-tracing-demo>
+agent_endpoint=<local ip or remote host; e.g. ingress-red-saas.instana.io>
+agent_endpoint_port=<443 already set as default; or 4443 for local>
+cluster_name=<name of your K8s/minikube cluster>
 ```
 
 In most scenarios only the fields `agent_key` and `agent_endpoint` are required.

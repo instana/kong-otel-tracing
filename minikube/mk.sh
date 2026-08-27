@@ -50,6 +50,7 @@ del_resources() {
   kubectl delete daemonsets --all -n "$ns"
   kubectl delete deployments --all -n "$ns"
   kubectl delete services --all -n "$ns"
+  local i
   for ((i=0; i<10; i++)); do
     if [ "$(kubectl get pods -n $ns | wc -l | tr -d '\n')" != "0" ]; then
       kubectl get all -n "$ns"
@@ -83,7 +84,7 @@ uninstall_instana_agent() {
 }
 
 # Check if pods are already running inside a given namespace.
-# Detect a broken instana-agent-controller-manager because
+# Detect a not yet ready or broken instana-agent-controller-manager because
 # it needs to create further pods such as the actual agent pod first.
 # Returns
 # RC=0 : Nothing running
@@ -103,12 +104,11 @@ namespace_running() {
   if [ ${found_running} -eq ${FOUND} ]; then
     is_running=1
   fi
-  # Broken instana-agent-controller-manager not spawning pods?
+  # instana-agent-controller-manager has not spawned pods?
   grep -q "controller-manager" <<< ${pods_output}
   local found_controller_manager=$?
   if [[ ${found_controller_manager} -eq ${FOUND} && \
        -n "${num_pods}" && ${num_pods} -eq 1 ]]; then
-    echo "Namespace $ns has broken controller manager."
     RC=2
     return
   fi
@@ -132,25 +132,37 @@ namespace_running() {
 # But check first if it is installed and running already.
 # Skip installation or uninstall first in these cases. ;-)
 #
+# Check for 30s if the controller manager spawns further pods,
+# if not, it is faulty, and a reinstall is required. Try this
+# 3 times.
+#
 # Include the agent configuration from .env.
 install_instana_agent() {
+  set -x
 
-  # Already running?
-  namespace_running instana-agent
-  case "$RC" in
-  1)
-    return; ;;
-  2)
-    uninstall_instana_agent
-    sleep 2; ;;
-  *)
-    ;;
-  esac
+  # The agent bring up is unreliable.
+  # So try 3 times to install it properly.
+  local i
+  for ((i=0; i<3; i++)); do
+    # Already running?
+    namespace_running instana-agent
+    case "$RC" in
+    1)
+      set +x; return; ;;
+    2)
+      echo "Instana agent controller manager is broken."
+      uninstall_instana_agent
+      set -x
+      sleep 2; ;;
+    *)
+      ;;
+    esac
 
-  # Include agent config
-  . ../.env
+    # Include agent config
+    . ../.env
 
-  helm install instana-agent \
+    # Do the actual installation
+    helm install instana-agent \
     --repo https://agents.instana.io/helm \
     --namespace instana-agent \
     --create-namespace \
@@ -177,6 +189,28 @@ com.instana.plugin.kong:
       protocol: 'http'
     " \
     instana-agent
+
+    # First install is always broken due to whatever reason
+    if [ $i -eq 0 ]; then
+      sleep 5;
+      continue;
+    fi
+
+    # Give the instana-agent-controller-manager 30s to start up further pods.
+    # If that fails, the controller-manager is broken
+    local j
+    for ((j=0; j<30; j++)); do
+      sleep 1
+      namespace_running instana-agent
+      case "$RC" in
+      1)
+        set +x; return; ;;
+      *)
+        ;;
+      esac
+    done
+  done
+  set +x
 }
 
 MINIKUBE_IS_UP=0
@@ -291,6 +325,7 @@ stop_demo_pods() {
   del_deployment client-app
   stop_kong
 
+  local i
   for ((i=0; i<30; i++)); do
     if [ "$(kubectl -n ${NAMESPACE} get pods | grep "kong\|app" | wc -l | tr -d '\n')" != "0" ]; then
       kubectl -n ${NAMESPACE} get pods
