@@ -1,4 +1,5 @@
 .bob
 .env
 agent/logs/*
+kong/kong.yml
 *.patch

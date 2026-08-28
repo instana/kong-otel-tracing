@@ -6,16 +6,19 @@ Also Kong monitoring is shown.
 ## Prerequisites
 
 A `docker-compose` installation running on your machine. This demo has been created and tested on Linux with `docker-compose`.
+Also the shell command `envsubst` (package `gettext`) needs to be installed.
 
 ## Configure
 
 Create a `.env` file in the root of the checked-out version of this repository and enter the following text, with the values adjusted as necessary:
 
 ```text
-agent_key=<TODO FILL IN>
-agent_endpoint=<local ip or remote host; e.g., ingress-red-saas.instana.io>
-agent_endpoint_port=<443 already set as default; or 4443 for local>
+agent_key=<agent secret key>
+download_key=<download secret key (optional agent key with download privileges)>
 agent_zone=<name of the zone for the agent; default: kong-tracing-demo>
+agent_endpoint=<local ip or remote host; e.g. ingress-red-saas.instana.io>
+agent_endpoint_port=<443 already set as default; or 4443 for local>
+cluster_name=<name of your K8s/minikube cluster>
 ```
 
 In most scenarios only the fields `agent_key` and `agent_endpoint` are required.
@@ -25,7 +28,7 @@ A template [.env.template](.env.template) can be copied to `.env` for your conve
 ## Build & Launch
 
 ```bash
-docker-compose down && docker-compose up --build
+./run_demo.sh
 ```
 
 This will build and launch
@@ -95,6 +98,10 @@ com.instana.plugin.kong:
       protocol: 'http'      # ['https' or 'http']. Default is 'https'. Protocol to access Kong Admin API.
       availabilityZone: 'KongAZ'   # default is 'KongAZ' - a separate Kong host appears on infrastructure map
 ```
+
+## Run this in minikube
+
+See: [minikube/README.md](./minikube/README.md)
 
 ## Known issues
 

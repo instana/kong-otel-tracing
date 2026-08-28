@@ -1,0 +1,3 @@
+client-app-deployment.yaml
+server-app-deployment.yaml
+kong-deployment.yaml
